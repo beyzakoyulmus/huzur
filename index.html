@@ -2,22 +2,26 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Yıldızlı Dertleşme</title>
     <style>
+        /*
+         * --- GENEL VE MOBİL UYUMLULUK AYARLARI ---
+         */
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, #000428, #004e92);
-            overflow: hidden;
+            /* Ekranın dikey olarak büyüyüp küçülmesini engellemek için overflow-y: hidden; */
+            overflow: hidden; 
             font-family: 'Segoe UI', sans-serif, Arial;
             color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            background: linear-gradient(to bottom, #000428, #004e92);
         }
 
         body::before {
@@ -31,70 +35,92 @@
             z-index: 0;
         }
 
-        /* Canvas en üstte, tıklamalar içinden geçer */
         canvas {
             position: absolute;
             top: 0;
             left: 0;
-            z-index: 50; 
-            pointer-events: none; 
+            z-index: 50;
+            pointer-events: none;
         }
 
         h1 {
-            font-size: 2em;
-            margin-bottom: 30px;
+            font-size: 1.8em; /* Mobil için biraz küçültüldü */
+            margin: 0 10px 30px 10px; /* Kenarlardan boşluk eklendi */
             text-align: center;
             opacity: 0.8;
             z-index: 10;
             text-shadow: 0 0 20px rgba(255,255,255,0.3);
             font-weight: 300;
         }
-
+        
+        /*
+         * --- INPUT BÖLÜMÜ ---
+         */
         #input-container {
             position: relative;
-            z-index: 20; 
-            width: 60%;
+            z-index: 20;
+            width: 90%; /* Mobil cihazlarda daha geniş yer kaplaması sağlandı */
             max-width: 700px;
         }
 
         #textbox {
             width: 100%;
-            height: 60px;
-            padding: 15px 30px;
-            font-size: 1.6em; 
+            height: 50px; /* Mobil için biraz daha küçük yükseklik */
+            padding: 10px 20px;
+            font-size: 1.2em; /* Mobil için yazı boyutu optimize edildi */
             border: none;
-            border-radius: 30px;
+            border-radius: 25px; /* Yüksekliğe göre yuvarlandı */
             background: rgba(255, 255, 255, 0.15);
             color: white;
             outline: none;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px); /* Blur azaltıldı */
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
             transition: all 0.3s ease;
             text-align: left;
-            padding-left: 45px; 
+            padding-left: 45px;
+            box-sizing: border-box; /* Padding'in genişliğe dahil olmasını sağla */
         }
 
         #textbox:focus {
             background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
         }
 
         #textbox::placeholder {
             color: rgba(255, 255, 255, 0.5);
-            font-size: 0.9em;
+            font-size: 1em;
             font-style: italic;
         }
 
+        /*
+         * --- DİĞER MOBİL AYARLAR ---
+         */
         #audio-control {
-            position: absolute;
-            bottom: 30px;
+            position: fixed; /* position: absolute yerine fixed daha iyi olabilir */
+            bottom: 20px;
+            right: 20px; /* Sağa yaslandı */
+            left: auto;
             color: rgba(255,255,255,0.5);
             cursor: pointer;
             z-index: 100;
             font-size: 14px;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
             transition: color 0.3s;
         }
         #audio-control:hover { color: white; }
+
+        /* Mobil Cihazlar için Medya Sorgusu (İhtiyaç duyulursa) */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5em; /* Çok küçük ekranlarda daha küçük başlık */
+            }
+            #textbox {
+                font-size: 1.1em;
+                height: 45px;
+            }
+        }
 
     </style>
 </head>
@@ -131,12 +157,16 @@
         const SPECIAL_STAR_INTERVAL = 180000; // 3 dakika (milisaniye cinsinden: 3 * 60 * 1000)
 
         function resize() {
+            // Mobil cihazlarda sanal klavye açıldığında viewport yüksekliği değişir. 
+            // Bu durumu yönetmek için innerHeight kullanmak en yaygın çözümdür.
             width = window.innerWidth;
             height = window.innerHeight;
             canvas.width = width;
             canvas.height = height;
         }
+        // Resize olayına ek olarak, klavye açıldığında oluşabilecek yükseklik değişimlerini izlemek için
         window.addEventListener('resize', resize);
+        window.addEventListener('orientationchange', resize);
         resize();
 
         function random(min, max) { return Math.random() * (max - min) + min; }
@@ -158,6 +188,8 @@
 
         function spawnDroppingChar(char) {
             const rect = input.getBoundingClientRect();
+            // Mobil klavyenin yarattığı kaymayı telafi etmek zor olduğundan, başlangıç pozisyonunu 
+            // giriş kutusunun merkezine göre hesaplamak daha güvenlidir.
             const startX = rect.left + 45; 
             const startY = rect.top + (rect.height / 2) + 8; 
 
@@ -165,7 +197,7 @@
                 char: char,
                 x: startX,
                 y: startY,
-                vx: random(-0.3, 0.3), 
+                vx: random(-0.3, 0.3),  
                 vy: random(0.8, 1.5),  
                 opacity: 1,
                 size: 26, 
@@ -173,7 +205,7 @@
             });
         }
 
-        // --- GERÇEK 5 KÖŞELİ YILDIZ ÇİZME FONKSİYONU ---
+        // --- GERÇEK 5 KÖŞELİ YILDIZ ÇİZME FONKSİYONU (Değişmedi) ---
         function drawFivePointStar(ctx, cx, cy, outerRadius, innerRadius, alpha) {
             let rot = Math.PI / 2 * 3;
             let x = cx;
@@ -198,7 +230,7 @@
             ctx.closePath();
             
             ctx.fillStyle = `rgba(255, 255, 220, ${alpha})`;
-            ctx.shadowBlur = 20; // Parlama efekti
+            ctx.shadowBlur = 20; 
             ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
             ctx.fill();
             ctx.restore();
@@ -211,7 +243,6 @@
             stars.forEach(star => {
                 if (star.isSpecial) {
                     // ÖZEL PARLAK YILDIZ (5 KÖŞELİ)
-                    // Hafifçe büyüyüp küçülme (Pulsing) efekti
                     const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.15; 
                     drawFivePointStar(ctx, star.x, star.y, star.radius * 3 * pulse, star.radius * 1.5 * pulse, star.alpha);
                 } else {
@@ -232,7 +263,7 @@
                 p.y += p.vy;      
                 p.x += p.vx;      
                 p.opacity -= 0.005; 
-                p.size -= 0.02;   
+                p.size -= 0.02;    
 
                 ctx.save();
                 ctx.translate(p.x, p.y);
@@ -250,13 +281,11 @@
 
                     // --- MANTIK: İLK YILDIZ VEYA 3 DAKİKA SONRASI ---
                     if (!firstStarCreated) {
-                        // İlk yıldız her zaman özeldir
                         isSpecialStar = true;
                         firstStarCreated = true;
                         lastSpecialStarTime = now;
                     } 
                     else if (now - lastSpecialStarTime > SPECIAL_STAR_INTERVAL) {
-                        // Son özel yıldızdan beri 3 dakika geçtiyse
                         isSpecialStar = true;
                         lastSpecialStarTime = now;
                     }
@@ -278,15 +307,20 @@
 
         function toggleAudio() {
             if (audio.paused) {
-                audio.play();
-                audioControl.innerText = "🔇 Yağmur Sesi: Açık";
+                // Mobil cihazlarda sesin çalması için kullanıcının bir etkileşimi şarttır.
+                // Bu fonksiyon zaten bir tıklama olayı içinde olduğu için çalışacaktır.
+                audio.play().catch(e => console.log("Ses çalma hatası:", e));
+                audioControl.innerHTML = "🔇 Yağmur Sesi: Açık";
             } else {
                 audio.pause();
-                audioControl.innerText = "🎵 Yağmur Sesi: Kapalı";
+                audioControl.innerHTML = "🎵 Yağmur Sesi: Kapalı";
             }
         }
         
+        // Sesin çalması için ilk etkileşimden sonra (önerilen bir kalıp)
         document.body.addEventListener('click', () => {
+             // Kullanıcı ilk tıkladığında ses çalma denemesi yapılabilir. 
+             // Ancak ben bunu toggleAudio fonksiyonuna bıraktım.
         }, {once:true});
 
     </script>
